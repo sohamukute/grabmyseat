@@ -1,0 +1,47 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 2h
+      cookie:
+        same-site: lax
+        secure: ${COOKIE_SECURE:false}
+
+spring:
+  application:
+    name: grabmyseat
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5442/grabmyseat}
+    username: ${DB_USER:grabmyseat}
+    password: ${DB_PASSWORD:grabmyseat}
+    hikari:
+      maximum-pool-size: ${DB_POOL:30}
+  sql:
+    init:
+      mode: ${SQL_INIT:always}
+  session:
+    jdbc:
+      initialize-schema: never
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_TLS:false}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+app:
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:}
+    key-secret: ${RAZORPAY_KEY_SECRET:}
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
+  url: ${APP_URL:http://localhost:8080}
+  mail-from: ${MAIL_FROM:GrabMySeat <tickets@grabmyseat.local>}

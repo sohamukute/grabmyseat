@@ -1,0 +1,41 @@
+# maven
+target/
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# ide
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# env and secrets
+.env
+*.local
+
+# logs
+*.log
+
+# os
+.DS_Store
+
+# node (frontend)
+node_modules/
+dist/
+.vite/
+
+# worktrees
+.worktrees/
+
+# python cache
+__pycache__/
+*.py[cod]
+
+# built frontend
+app/src/main/resources/static/
+# project-specific
+fly.toml
+.env.example
+GRABMYSEAT_PLAN.md
