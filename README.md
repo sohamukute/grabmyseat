@@ -48,6 +48,7 @@ npm --prefix frontend test
 Start the full local stack:
 
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
 

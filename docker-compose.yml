@@ -1,0 +1,346 @@
+# GrabMySeat full-stack local deployment.
+services:
+  postgres:
+    image: postgres:16
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      POSTGRES_DB: "grabmyseat"
+    ports:
+      - "5442:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grabmyseat"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: auth-service
+        PORT: "8081"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      JWT_SECRET: "${JWT_SECRET}"
+      DB_URL: "jdbc:postgresql://postgres:5432/grabmyseat"
+      DB_USER: "grabmyseat"
+      DB_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8081"
+      SPRING_PROFILES_ACTIVE: "demo"
+      TWILIO_ACCOUNT_SID: "${TWILIO_ACCOUNT_SID:-}"
+      TWILIO_AUTH_TOKEN: "${TWILIO_AUTH_TOKEN:-}"
+      TWILIO_FROM_NUMBER: "${TWILIO_FROM_NUMBER:-}"
+      OTP_EXPOSE_CODE: "${OTP_EXPOSE_CODE:-true}"
+      DEMO_ADMIN_USERNAME: "demo-admin"
+      DEMO_ADMIN_PASSWORD: "DemoPass!2026"
+      DEMO_STAFF_USERNAME: "demo-staff"
+      DEMO_STAFF_PASSWORD: "DemoPass!2026"
+      DEMO_ORGANIZER_USERNAME: "north-star-live"
+      DEMO_ORGANIZER_PASSWORD: "OrganizerPass!2026"
+    expose:
+      - "8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  payment-wallet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: payment-wallet
+        PORT: "8083"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      PAYMENT_WALLET_POSTGRES_URL: "jdbc:postgresql://postgres:5432/grabmyseat_wallet"
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8083"
+    expose:
+      - "8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  inventory-booking:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: inventory-booking
+        PORT: "8082"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
+      INVENTORY_BOOKING_POSTGRES_URL: "jdbc:postgresql://postgres:5432/grabmyseat_inventory"
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8082"
+      SPRING_PROFILES_ACTIVE: "demo"
+      DEMO_ORGANIZER_USERNAME: "north-star-live"
+      AUTH_SERVICE_URI: "http://auth-service:8081"
+      WAITING_ROOM_URI: "http://waiting-room:8085"
+      POSTER_UPLOAD_DIR: "/app/uploads"
+    expose:
+      - "8082"
+    volumes:
+      - poster_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  waiting-room:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: waiting-room
+        PORT: "8085"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
+      WAITING_ROOM_POSTGRES_URL: "jdbc:postgresql://postgres:5432/grabmyseat_waiting_room"
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8085"
+      INVENTORY_URI: "http://inventory-booking:8082"
+    expose:
+      - "8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  saga-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: saga-orchestrator
+        PORT: "8084"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      SAGA_ORCHESTRATOR_POSTGRES_URL: "jdbc:postgresql://postgres:5432/grabmyseat_saga"
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8084"
+      INVENTORY_URI: "http://inventory-booking:8082"
+      WALLET_URI: "http://payment-wallet:8083"
+      WAITING_ROOM_URI: "http://waiting-room:8085"
+      TICKETING_URI: "http://ticketing:8086"
+    expose:
+      - "8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      inventory-booking:
+        condition: service_healthy
+      payment-wallet:
+        condition: service_healthy
+      waiting-room:
+        condition: service_healthy
+      ticketing:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  ticketing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: ticketing
+        PORT: "8086"
+    environment:
+      WALLET_INTERNAL_API_KEY: "${WALLET_INTERNAL_API_KEY}"
+      AUTH_INTERNAL_API_KEY: "${AUTH_INTERNAL_API_KEY}"
+      WAITING_ROOM_INTERNAL_API_KEY: "${WAITING_ROOM_INTERNAL_API_KEY}"
+      TICKETING_INTERNAL_API_KEY: "${TICKETING_INTERNAL_API_KEY}"
+      INVENTORY_BOOKING_INTERNAL_API_KEY: "${INVENTORY_BOOKING_INTERNAL_API_KEY}"
+      SPRING_DATA_REDIS_HOST: "redis"
+      SPRING_DATA_REDIS_PORT: "6379"
+      TICKETING_POSTGRES_URL: "jdbc:postgresql://postgres:5432/grabmyseat_ticketing"
+      POSTGRES_USER: "grabmyseat"
+      POSTGRES_PASSWORD: "grabmyseat"
+      SERVER_PORT: "8086"
+      TICKET_SIGNING_KEY: "${TICKET_SIGNING_KEY}"
+      INVENTORY_BOOKING_URI: "http://inventory-booking:8082"
+    expose:
+      - "8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      inventory-booking:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8086/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: gateway
+        PORT: "8080"
+    environment:
+      JWT_SECRET: "${JWT_SECRET}"
+      SERVER_PORT: "8080"
+      AUTH_URI: "http://auth-service:8081"
+      INVENTORY_URI: "http://inventory-booking:8082"
+      WALLET_URI: "http://payment-wallet:8083"
+      SAGA_URI: "http://saga-orchestrator:8084"
+      WAITING_ROOM_URI: "http://waiting-room:8085"
+      TICKETING_URI: "http://ticketing:8086"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      # Keep public defaults conservative, while allowing a deployment-specific
+      # override when traffic is distributed across several gateway instances.
+      AUTH_RATE_REPLENISH: "${AUTH_RATE_REPLENISH:-5}"
+      AUTH_RATE_BURST: "${AUTH_RATE_BURST:-10}"
+      DEFAULT_RATE_REPLENISH: "${DEFAULT_RATE_REPLENISH:-30}"
+      DEFAULT_RATE_BURST: "${DEFAULT_RATE_BURST:-60}"
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      inventory-booking:
+        condition: service_healthy
+      payment-wallet:
+        condition: service_healthy
+      saga-orchestrator:
+        condition: service_healthy
+      waiting-room:
+        condition: service_healthy
+      ticketing:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-4173}:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  loki:
+    image: grafana/loki:2.9.4
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+    ports:
+      - "3100:3100"
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    command: ["-config.file=/etc/tempo/tempo-config.yml"]
+    volumes:
+      - ./tempo-config.yml:/etc/tempo/tempo-config.yml:ro
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+
+volumes:
+  pgdata:
+  poster_uploads:
