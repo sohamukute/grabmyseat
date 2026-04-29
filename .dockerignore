@@ -1,0 +1,28 @@
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Project docs / meta
+.kimchi/
+docs/
+*.md
+
+# Local logs
+*.log
+/tmp/
+
+# maven build output (rebuilt inside the image)
+target/
+
+# frontend deps (not needed for the service jars)
+frontend/node_modules/
+frontend/dist/
+
+# OS files
+.DS_Store
