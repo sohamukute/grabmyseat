@@ -1,0 +1,52 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/grabmyseat}
+    username: ${DB_USER:grabmyseat}
+    password: ${DB_PASSWORD:grabmyseat}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:15}
+  jpa:
+    hibernate:
+      # Flyway owns the schema. Hibernate only checks the entities match it.
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+jwt:
+  # dev secret, overridden by JWT_SECRET in real environments. Must be at least 32 bytes for HS256.
+  secret: ${JWT_SECRET:change-me-dev-secret-please-rotate-in-prod-0123456789}
+  access-ttl: ${JWT_ACCESS_TTL:15m}
+  refresh-ttl: ${JWT_REFRESH_TTL:7d}
+
+auth:
+  internal:
+    api-key: ${AUTH_INTERNAL_API_KEY:}
+  otp:
+    expose-code: ${OTP_EXPOSE_CODE:false}
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  from-number: ${TWILIO_FROM_NUMBER:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
