@@ -1,0 +1,94 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      routes:
+        - id: auth
+          uri: ${AUTH_URI:lb://auth-service}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_REPLENISH:5}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_BURST:10}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+        - id: inventory
+          uri: ${INVENTORY_URI:lb://inventory-booking}
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${DEFAULT_RATE_REPLENISH:30}
+                redis-rate-limiter.burstCapacity: ${DEFAULT_RATE_BURST:60}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+        - id: wallet
+          uri: ${WALLET_URI:lb://payment-wallet}
+          predicates:
+            - Path=/api/wallet/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${DEFAULT_RATE_REPLENISH:30}
+                redis-rate-limiter.burstCapacity: ${DEFAULT_RATE_BURST:60}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+        - id: saga
+          uri: ${SAGA_URI:lb://saga-orchestrator}
+          predicates:
+            - Path=/api/saga/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${DEFAULT_RATE_REPLENISH:30}
+                redis-rate-limiter.burstCapacity: ${DEFAULT_RATE_BURST:60}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+        - id: waiting-room
+          uri: ${WAITING_ROOM_URI:lb://waiting-room}
+          predicates:
+            - Path=/api/waiting-room/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${DEFAULT_RATE_REPLENISH:30}
+                redis-rate-limiter.burstCapacity: ${DEFAULT_RATE_BURST:60}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+        - id: ticketing
+          uri: ${TICKETING_URI:lb://ticketing}
+          predicates:
+            - Path=/api/ticketing/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${DEFAULT_RATE_REPLENISH:30}
+                redis-rate-limiter.burstCapacity: ${DEFAULT_RATE_BURST:60}
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@ipKeyResolver}"
+
+jwt:
+  secret: ${JWT_SECRET:change-me-dev-secret-please-rotate-in-prod-[REDACTED-UK_NHS]}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
