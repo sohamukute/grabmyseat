@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: ${TEST_POSTGRES_URL:jdbc:postgresql://localhost:5442/grabmyseat_waiting_room}
+    username: ${POSTGRES_USER:grabmyseat}
+    password: ${POSTGRES_PASSWORD:grabmyseat}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      port: ${TEST_REDIS_PORT:6379}
+
+waiting-room:
+  internal:
+    api-key: test-internal-key
+  admission-rate-per-second: 10
+  offer-ttl-minutes: 5
+  queue-token-ttl-hours: 2
+  permit-ttl-minutes: 10
+  scheduler:
+    enabled: false
