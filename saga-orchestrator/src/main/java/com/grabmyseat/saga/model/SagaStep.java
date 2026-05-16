@@ -1,0 +1,19 @@
+package com.grabmyseat.saga.model;
+
+public enum SagaStep {
+    DEBIT_REQUESTED,
+    DEBITED,
+    DEBIT_FAILED,
+    DEBIT_DUPLICATE,
+    CONFIRM_REQUESTED,
+    CONFIRMED,
+    TICKET_ISSUED,
+    TICKET_ISSUE_FAILED,
+    CONFIRM_FAILED,
+    COMPENSATION_STARTED,
+    REFUNDED,
+    REFUND_FAILED,
+    RELEASED,
+    RELEASE_FAILED,
+    FAILED
+}
