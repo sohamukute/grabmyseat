@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${TEST_POSTGRES_URL}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+wallet:
+  internal:
+    api-key: test-key
