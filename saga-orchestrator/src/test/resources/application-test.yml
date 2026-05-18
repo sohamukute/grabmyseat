@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${TEST_POSTGRES_URL}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+inventory:
+  uri: ${TEST_INVENTORY_URI}
+wallet:
+  uri: ${TEST_WALLET_URI}
+  internal:
+    api-key: test-key
+
+ticketing:
+  uri: ${TEST_TICKETING_URI}
+  internal:
+    api-key: ${TEST_TICKETING_INTERNAL_API_KEY:test-ticketing-key}
