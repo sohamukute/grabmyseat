@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: ticketing
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+ticketing:
+  internal:
+    api-key: test-ticketing-key
+
+ticket:
+  signing-key: ${TICKET_SIGNING_KEY:test-integration-signing-key}
