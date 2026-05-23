@@ -1,0 +1,76 @@
+.profile-panel {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+  padding: 1.5rem;
+  border: 1px solid #321727;
+  background: #fffafc;
+  color: #321727;
+}
+
+.profile-panel__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.profile-panel h2,
+.profile-panel__balance,
+.profile-panel__message {
+  margin: 0;
+}
+
+.profile-panel__balance {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 800;
+}
+
+.profile-panel__message--error {
+  color: #9c1c36;
+}
+
+.profile-panel__add-money,
+.profile-panel__dialog button {
+  width: fit-content;
+  border: 1px solid #321727;
+  padding: 0.7rem 1rem;
+  background: #f6a6d1;
+  color: #321727;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-panel__add-money:hover,
+.profile-panel__dialog button:hover {
+  background: #321727;
+  color: #fffafc;
+}
+
+.profile-panel__add-money:focus-visible,
+.profile-panel__dialog button:focus-visible {
+  outline: 3px solid #176b87;
+  outline-offset: 3px;
+}
+
+.profile-panel__dialog {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  width: min(28rem, calc(100vw - 2rem));
+  transform: translate(-50%, -50%);
+  border: 1px solid #321727;
+  padding: 1.5rem;
+  background: #fffafc;
+  color: #321727;
+  box-shadow: 0 1rem 0 #321727;
+}
+
+.profile-panel__dialog::backdrop {
+  background: rgb(50 23 39 / 0.55);
+}
+
+.profile-panel__dialog h3,
+.profile-panel__dialog p {
+  margin-top: 0;
+}
